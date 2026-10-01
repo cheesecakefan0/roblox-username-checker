@@ -25,9 +25,11 @@
             background: white;
             border-radius: 10px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            max-width: 900px;
+            max-width: 1200px;
             width: 100%;
             padding: 30px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         h1 {
@@ -42,9 +44,41 @@
             margin-bottom: 30px;
         }
 
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #999;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         .controls {
             display: grid;
-            grid-template-columns: 1fr 1fr auto auto;
+            grid-template-columns: 1fr 1fr auto auto auto;
             gap: 10px;
             margin-bottom: 20px;
             align-items: end;
@@ -105,6 +139,15 @@
             transform: none;
         }
 
+        .btn-stop {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-stop:hover {
+            background: #c82333;
+        }
+
         .btn-clear {
             background: #f0f0f0;
             color: #333;
@@ -112,6 +155,15 @@
 
         .btn-clear:hover {
             background: #e0e0e0;
+        }
+
+        .btn-check {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-check:hover {
+            background: #138496;
         }
 
         .status {
@@ -153,6 +205,8 @@
             border: 2px solid #f0f0f0;
             border-radius: 8px;
             padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
         }
 
         .section h2 {
@@ -171,6 +225,18 @@
             border-radius: 5px;
             margin-bottom: 10px;
             border-left: 4px solid #667eea;
+            animation: slideIn 0.3s ease-in;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .username-item.available {
@@ -205,6 +271,11 @@
             color: #721c24;
         }
 
+        .status-badge.checking {
+            background: #fff3cd;
+            color: #856404;
+        }
+
         .btn-action {
             padding: 6px 12px;
             margin-left: 5px;
@@ -236,19 +307,6 @@
             font-style: italic;
         }
 
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
         .loader {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #667eea;
@@ -266,6 +324,40 @@
             100% { transform: rotate(360deg); }
         }
 
+        .stats {
+            background: #f0f7ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stats-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .stats-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .stats-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .stats-value {
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        .search-history {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
         @media (max-width: 768px) {
             .controls {
                 grid-template-columns: 1fr;
@@ -274,36 +366,98 @@
             .content {
                 grid-template-columns: 1fr;
             }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎮 Roblox Username Checker</h1>
-        <p class="subtitle">Find available usernames with your custom filters</p>
+        <p class="subtitle">Find available usernames with advanced filters</p>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('finder')">🔍 Username Finder</button>
+            <button class="tab-btn" onclick="switchTab('checker')">⚡ Check Username</button>
+            <button class="tab-btn" onclick="switchTab('saved')">⭐ Saved Usernames</button>
+        </div>
 
         <div class="status" id="status"></div>
 
-        <div class="controls">
-            <div class="form-group">
-                <label for="character-filter">Filter by Character/Letter:</label>
-                <input type="text" id="character-filter" placeholder="e.g., 'x', 'z', 'a'" maxlength="1">
+        <!-- Finder Tab -->
+        <div id="finder" class="tab-content active">
+            <div class="controls">
+                <div class="form-group">
+                    <label for="character-filter">Required Characters (optional):</label>
+                    <input type="text" id="character-filter" placeholder="e.g., 'xyz', 'ab'" maxlength="20">
+                </div>
+
+                <div class="form-group">
+                    <label for="username-length">Username Length:</label>
+                    <input type="number" id="username-length" min="3" max="20" value="5" placeholder="5">
+                </div>
+
+                <button class="btn-search" id="search-btn" onclick="startSearch()">Start Search</button>
+                <button class="btn-stop" id="stop-btn" onclick="stopSearch()" style="display:none;">Stop Search</button>
+                <button class="btn-clear" id="clear-btn" onclick="clearFinderStats()">Clear</button>
             </div>
 
-            <div class="form-group">
-                <label for="username-length">Username Length:</label>
-                <input type="number" id="username-length" min="3" max="20" value="5" placeholder="5">
+            <div class="stats" id="stats" style="display:none;">
+                <div class="stats-item">
+                    <span class="stats-label">Attempts:</span>
+                    <span class="stats-value" id="attempts-count">0</span>
+                </div>
+                <div class="stats-item">
+                    <span class="stats-label">Usernames Checked:</span>
+                    <span class="stats-value" id="checked-count">0</span>
+                </div>
+                <div class="stats-item">
+                    <span class="stats-label">Available Found:</span>
+                    <span class="stats-value" id="available-count">0</span>
+                </div>
+                <div class="stats-item">
+                    <span class="stats-label">Search Time:</span>
+                    <span class="stats-value" id="time-count">0s</span>
+                </div>
             </div>
 
-            <button class="btn-search" id="search-btn">Search</button>
-            <button class="btn-clear" id="clear-btn">Clear All</button>
+            <div class="content">
+                <div class="section">
+                    <h2>🔍 Checked Usernames</h2>
+                    <div id="usernames-list" class="empty-state">No usernames checked yet</div>
+                </div>
+
+                <div class="section">
+                    <h2>✅ Available Found</h2>
+                    <div id="available-list" class="empty-state">No available usernames found</div>
+                </div>
+            </div>
         </div>
 
-        <div class="content">
-            <div class="section">
-                <h2>🔍 Available Username Found</h2>
-                <div id="current-username" class="empty-state">No username found yet</div>
+        <!-- Checker Tab -->
+        <div id="checker" class="tab-content">
+            <div class="controls">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="check-username">Enter Username to Check:</label>
+                    <input type="text" id="check-username" placeholder="e.g., 'xyzabc'" maxlength="20">
+                </div>
             </div>
+
+            <button class="btn-check" onclick="checkSpecificUsername()" style="width: 100%; margin-bottom: 20px;">Check Username Availability</button>
+
+            <div id="check-result" class="empty-state">Enter a username and click Check</div>
+
+            <div class="section" style="margin-top: 20px;">
+                <h2>📋 Search History</h2>
+                <div id="check-history" class="search-history empty-state">No searches yet</div>
+            </div>
+        </div>
+
+        <!-- Saved Tab -->
+        <div id="saved" class="tab-content">
+            <button class="btn-clear" onclick="clearAllSaved()" style="margin-bottom: 20px; width: 100%;">Delete All Saved</button>
 
             <div class="section">
                 <h2>⭐ Saved Usernames</h2>
@@ -316,19 +470,49 @@
         const characterFilterInput = document.getElementById('character-filter');
         const usernameLengthInput = document.getElementById('username-length');
         const searchBtn = document.getElementById('search-btn');
+        const stopBtn = document.getElementById('stop-btn');
         const clearBtn = document.getElementById('clear-btn');
-        const currentUsernameDiv = document.getElementById('current-username');
+        const usernamesListDiv = document.getElementById('usernames-list');
+        const availableListDiv = document.getElementById('available-list');
         const savedListDiv = document.getElementById('saved-list');
         const statusDiv = document.getElementById('status');
+        const statsDiv = document.getElementById('stats');
 
         let savedUsernames = JSON.parse(localStorage.getItem('robloxUsernames')) || [];
+        let checkedHistory = JSON.parse(localStorage.getItem('robloxCheckHistory')) || [];
         let isSearching = false;
-        let currentUsername = null;
+        let searchStats = {
+            attempts: 0,
+            checked: 0,
+            available: 0,
+            startTime: null,
+            checkedUsernames: [],
+            availableUsernames: []
+        };
 
-        // Roblox API to check if username is available using CORS proxy
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // Refresh displays
+            if (tabName === 'saved') {
+                displaySavedUsernames();
+            } else if (tabName === 'checker') {
+                displayCheckHistory();
+            }
+        }
+
         async function isUsernameAvailable(username) {
             try {
-                // Using CORS proxy to bypass CORS restrictions
                 const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
                 const apiUrl = `https://api.roblox.com/users/get-by-username?username=${encodeURIComponent(username)}`;
                 
@@ -339,17 +523,12 @@
                     }
                 });
                 
-                // If status is 200, username is taken
-                // If status is 404, username is available
                 return response.status === 404;
             } catch (error) {
-                console.error('Error checking username:', error);
-                // Retry with alternative method
                 return await checkUsernameAlternative(username);
             }
         }
 
-        // Alternative method using allorigins proxy
         async function checkUsernameAlternative(username) {
             try {
                 const apiUrl = `https://api.roblox.com/users/get-by-username?username=${encodeURIComponent(username)}`;
@@ -358,29 +537,29 @@
                 const response = await fetch(proxyUrl);
                 const data = await response.json();
                 
-                // If contents include error or 404, username is available
                 if (data.contents.includes('not found') || data.contents.includes('404')) {
                     return true;
                 }
-                // If contents include user data, username is taken
                 return false;
             } catch (error) {
-                console.error('Alternative check failed:', error);
                 return null;
             }
         }
 
-        function generateRandomUsername(length, filterChar) {
+        function generateRandomUsername(length, filterChars) {
             const chars = 'abcdefghijklmnopqrstuvwxyz0123456789_';
             let username = '';
 
-            // If filter is set, ensure it's included
-            if (filterChar) {
-                username = filterChar;
-                for (let i = 1; i < length; i++) {
+            if (filterChars && filterChars.length > 0) {
+                // Add required characters
+                for (let i = 0; i < filterChars.length; i++) {
+                    username += filterChars[i];
+                }
+                // Fill remaining length
+                for (let i = filterChars.length; i < length; i++) {
                     username += chars.charAt(Math.floor(Math.random() * chars.length));
                 }
-                // Shuffle to randomize position
+                // Shuffle
                 username = username.split('').sort(() => Math.random() - 0.5).join('');
             } else {
                 for (let i = 0; i < length; i++) {
@@ -401,9 +580,17 @@
             }
         }
 
-        async function searchUsername() {
+        function updateStats() {
+            const elapsed = Math.floor((Date.now() - searchStats.startTime) / 1000);
+            document.getElementById('attempts-count').textContent = searchStats.attempts;
+            document.getElementById('checked-count').textContent = searchStats.checked;
+            document.getElementById('available-count').textContent = searchStats.available;
+            document.getElementById('time-count').textContent = elapsed + 's';
+        }
+
+        async function startSearch() {
             const length = parseInt(usernameLengthInput.value) || 5;
-            const filterChar = characterFilterInput.value.toLowerCase() || null;
+            const filterChars = characterFilterInput.value.toLowerCase() || '';
 
             if (length < 3 || length > 20) {
                 showStatus('Username length must be between 3 and 20 characters', 'error');
@@ -411,67 +598,101 @@
             }
 
             isSearching = true;
-            searchBtn.disabled = true;
-            showStatus('<span class="loader"></span>🔍 Searching for available username...', 'info');
+            searchStats = {
+                attempts: 0,
+                checked: 0,
+                available: 0,
+                startTime: Date.now(),
+                checkedUsernames: [],
+                availableUsernames: []
+            };
 
-            let attempts = 0;
-            const maxAttempts = 50;
-            let foundUsername = false;
+            searchBtn.style.display = 'none';
+            stopBtn.style.display = 'block';
+            statsDiv.style.display = 'block';
+            usernamesListDiv.innerHTML = '';
+            availableListDiv.innerHTML = '';
 
-            while (attempts < maxAttempts && isSearching && !foundUsername) {
-                const username = generateRandomUsername(length, filterChar);
-                attempts++;
+            showStatus('<span class="loader"></span>🔍 Searching for available usernames...', 'info');
 
-                showStatus(`<span class="loader"></span>🔍 Searching... Attempt ${attempts}/${maxAttempts}`, 'info');
+            let statUpdateInterval = setInterval(() => {
+                if (!isSearching) {
+                    clearInterval(statUpdateInterval);
+                } else {
+                    updateStats();
+                }
+            }, 500);
+
+            while (isSearching) {
+                const username = generateRandomUsername(length, filterChars);
+                searchStats.attempts++;
+                updateStats();
 
                 const available = await isUsernameAvailable(username);
 
                 if (available === null) {
-                    // Retry on network error
                     continue;
                 }
 
+                searchStats.checked++;
+                searchStats.checkedUsernames.push({ username, available });
+
+                // Display username
+                const item = document.createElement('div');
+                item.className = `username-item ${available ? 'available' : 'unavailable'}`;
+                item.innerHTML = `
+                    <span class="status-badge ${available ? 'available' : 'unavailable'}">
+                        ${available ? '✓ AVAILABLE' : '✗ TAKEN'}
+                    </span>
+                    <span class="username-text">${username}</span>
+                    ${available ? `<button class="btn-action btn-keep" onclick="keepUsername('${username}')">Keep</button>` : ''}
+                `;
+
                 if (available) {
-                    currentUsername = username;
-                    displayCurrentUsername(username, true);
-                    showStatus(`✅ Found available username: <strong>${username}</strong>`, 'success');
-                    foundUsername = true;
-                    break;
+                    searchStats.available++;
+                    availableListDiv.innerHTML = '';
+                    const availItem = document.createElement('div');
+                    availItem.className = 'username-item available';
+                    availItem.innerHTML = `
+                        <span class="username-text">${username}</span>
+                        <div>
+                            <button class="btn-action btn-keep" onclick="keepUsername('${username}')">Keep</button>
+                            <button class="btn-action btn-delete" onclick="discardUsername('${username}')">Discard</button>
+                        </div>
+                    `;
+                    availableListDiv.appendChild(availItem);
                 }
 
-                // Small delay to avoid rate limiting
-                await new Promise(resolve => setTimeout(resolve, 300));
+                usernamesListDiv.appendChild(item);
+
+                // Keep only last 50 in view
+                if (usernamesListDiv.children.length > 50) {
+                    usernamesListDiv.removeChild(usernamesListDiv.firstChild);
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 200));
             }
 
-            if (!foundUsername && isSearching) {
-                showStatus(`Searched ${maxAttempts} usernames, none were available. Try again!`, 'error');
-                displayCurrentUsername(null, false);
-            }
-
-            isSearching = false;
-            searchBtn.disabled = false;
+            clearInterval(statUpdateInterval);
         }
 
-        function displayCurrentUsername(username, isAvailable) {
-            if (!username) {
-                currentUsernameDiv.innerHTML = '<div class="empty-state">No username found yet</div>';
-                return;
-            }
+        function stopSearch() {
+            isSearching = false;
+            searchBtn.style.display = 'block';
+            stopBtn.style.display = 'none';
+            showStatus('✅ Search stopped', 'success');
+            updateStats();
+        }
 
-            currentUsernameDiv.innerHTML = `
-                <div class="username-item ${isAvailable ? 'available' : 'unavailable'}">
-                    <div>
-                        <span class="status-badge ${isAvailable ? 'available' : 'unavailable'}">
-                            ${isAvailable ? '✓ AVAILABLE' : '✗ TAKEN'}
-                        </span>
-                        <span class="username-text">${username}</span>
-                    </div>
-                    <div>
-                        <button class="btn-action btn-keep" onclick="keepUsername('${username}')">Keep</button>
-                        <button class="btn-action btn-delete" onclick="discardUsername()">Discard</button>
-                    </div>
-                </div>
-            `;
+        function clearFinderStats() {
+            isSearching = false;
+            searchStats = { attempts: 0, checked: 0, available: 0, startTime: null, checkedUsernames: [], availableUsernames: [] };
+            usernamesListDiv.innerHTML = '<div class="empty-state">No usernames checked yet</div>';
+            availableListDiv.innerHTML = '<div class="empty-state">No available usernames found</div>';
+            statsDiv.style.display = 'none';
+            searchBtn.style.display = 'block';
+            stopBtn.style.display = 'none';
+            showStatus('✅ Cleared', 'success');
         }
 
         function keepUsername(username) {
@@ -480,20 +701,89 @@
                 localStorage.setItem('robloxUsernames', JSON.stringify(savedUsernames));
                 displaySavedUsernames();
                 showStatus(`✅ "${username}" saved to your list!`, 'success');
-                discardUsername();
             }
         }
 
-        function deleteUsername(username) {
-            savedUsernames = savedUsernames.filter(u => u !== username);
-            localStorage.setItem('robloxUsernames', JSON.stringify(savedUsernames));
-            displaySavedUsernames();
-            showStatus(`🗑️ "${username}" deleted from your list`, 'success');
+        function discardUsername(username) {
+            availableListDiv.innerHTML = '<div class="empty-state">No available usernames found</div>';
+            showStatus(`Username discarded`, 'success');
         }
 
-        function discardUsername() {
-            currentUsername = null;
-            displayCurrentUsername(null, false);
+        async function checkSpecificUsername() {
+            const username = document.getElementById('check-username').value.trim();
+            
+            if (!username) {
+                showStatus('Please enter a username', 'error');
+                return;
+            }
+
+            if (username.length < 3 || username.length > 20) {
+                showStatus('Username must be between 3 and 20 characters', 'error');
+                return;
+            }
+
+            const checkResult = document.getElementById('check-result');
+            checkResult.innerHTML = '<div class="loader"></div> Checking...';
+
+            const available = await isUsernameAvailable(username);
+
+            // Add to history
+            const entry = { username, available, checkedAt: new Date().toLocaleTimeString() };
+            checkedHistory.unshift(entry);
+            checkedHistory = checkedHistory.slice(0, 20); // Keep last 20
+            localStorage.setItem('robloxCheckHistory', JSON.stringify(checkedHistory));
+
+            if (available === null) {
+                checkResult.innerHTML = `
+                    <div class="username-item unavailable">
+                        <span class="status-badge unavailable">❓ ERROR</span>
+                        <span class="username-text">Could not check "${username}" - Network error</span>
+                    </div>
+                `;
+                showStatus('Error checking username', 'error');
+            } else if (available) {
+                checkResult.innerHTML = `
+                    <div class="username-item available">
+                        <div>
+                            <span class="status-badge available">✓ AVAILABLE</span>
+                            <span class="username-text">${username}</span>
+                        </div>
+                        <button class="btn-action btn-keep" onclick="keepUsername('${username}')">Keep</button>
+                    </div>
+                `;
+                showStatus(`✅ "${username}" is AVAILABLE!`, 'success');
+            } else {
+                checkResult.innerHTML = `
+                    <div class="username-item unavailable">
+                        <span class="status-badge unavailable">✗ TAKEN</span>
+                        <span class="username-text">${username}</span>
+                    </div>
+                `;
+                showStatus(`❌ "${username}" is already taken`, 'error');
+            }
+
+            displayCheckHistory();
+        }
+
+        function displayCheckHistory() {
+            const historyDiv = document.getElementById('check-history');
+            
+            if (checkedHistory.length === 0) {
+                historyDiv.innerHTML = '<div class="empty-state">No searches yet</div>';
+                return;
+            }
+
+            historyDiv.innerHTML = checkedHistory.map(entry => `
+                <div class="username-item ${entry.available ? 'available' : 'unavailable'}">
+                    <div>
+                        <span class="status-badge ${entry.available ? 'available' : 'unavailable'}">
+                            ${entry.available ? '✓' : '✗'}
+                        </span>
+                        <span class="username-text">${entry.username}</span>
+                        <small style="color: #999; margin-left: 10px;">${entry.checkedAt}</small>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function displaySavedUsernames() {
@@ -505,37 +795,35 @@
             savedListDiv.innerHTML = savedUsernames.map(username => `
                 <div class="username-item available">
                     <span class="username-text">${username}</span>
-                    <div>
-                        <button class="btn-action btn-delete" onclick="deleteUsername('${username}')">Delete</button>
-                    </div>
+                    <button class="btn-action btn-delete" onclick="deleteSavedUsername('${username}')">Delete</button>
                 </div>
             `).join('');
         }
 
-        function clearAll() {
+        function deleteSavedUsername(username) {
+            savedUsernames = savedUsernames.filter(u => u !== username);
+            localStorage.setItem('robloxUsernames', JSON.stringify(savedUsernames));
+            displaySavedUsernames();
+            showStatus(`🗑️ "${username}" deleted`, 'success');
+        }
+
+        function clearAllSaved() {
             if (confirm('Are you sure you want to delete all saved usernames?')) {
                 savedUsernames = [];
                 localStorage.setItem('robloxUsernames', JSON.stringify(savedUsernames));
                 displaySavedUsernames();
-                discardUsername();
                 showStatus('✅ All usernames cleared', 'success');
             }
         }
 
         // Event listeners
-        searchBtn.addEventListener('click', searchUsername);
-        clearBtn.addEventListener('click', clearAll);
-
-        characterFilterInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') searchUsername();
-        });
-
-        usernameLengthInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') searchUsername();
+        document.getElementById('check-username').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkSpecificUsername();
         });
 
         // Initial display
         displaySavedUsernames();
+        displayCheckHistory();
     </script>
 </body>
 </html>
